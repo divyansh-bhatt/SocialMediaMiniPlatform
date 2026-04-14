@@ -1,0 +1,132 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Global CORS — allows the React frontend (port 3000) to call the gateway
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"   # Vite dev server
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      routes:
+
+        # ── AUTH SERVICE (port 8081) ────────────────────────────────────────
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1               # removes /api → /auth/...
+
+        # ── POST SERVICE (port 8082) ────────────────────────────────────────
+        - id: post-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/posts/**
+          filters:
+            - StripPrefix=1               # /api/posts/... → /posts/...
+            - name: JwtAuthFilter         # validates JWT for protected routes
+
+        # ── COMMENT SERVICE (port 8083) ─────────────────────────────────────
+        - id: comment-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── LIKE SERVICE (port 8084) ─────────────────────────────────────────
+        - id: like-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/likes/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── FOLLOW SERVICE (port 8085) ───────────────────────────────────────
+        - id: follow-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/follows/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── NOTIFICATION SERVICE (port 8086) ─────────────────────────────────
+        - id: notification-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── MEDIA SERVICE (port 8087) ─────────────────────────────────────────
+        - id: media-service-media
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        - id: media-service-stories
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/stories/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── SEARCH SERVICE (port 8088) ────────────────────────────────────────
+        - id: search-service-search
+          uri: http://localhost:8088
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - StripPrefix=1               # /api/search/... → /search/...
+
+        - id: search-service-hashtags
+          uri: http://localhost:8088
+          predicates:
+            - Path=/api/hashtags/**
+          filters:
+            - StripPrefix=1               # /api/hashtags/... → /hashtags/...
+
+# JWT secret — must match all microservices exactly
+jwt:
+  secret: connectsphere_super_secret_key_change_this_in_production_min_32_chars
+
+# Public paths — these routes skip JWT validation in the gateway filter
+gateway:
+  public-paths:
+    - /api/auth/register
+    - /api/auth/login
+    - /api/auth/refresh
+    - /api/auth/validate
+    - /api/auth/search
+    - /api/posts/public
+    - /api/posts/search
+    - /api/search/posts
+    - /api/search/users
+    - /api/search/hashtags
+    - /api/hashtags/trending
+    - /api/comments/post
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.connectsphere.gateway: DEBUG
