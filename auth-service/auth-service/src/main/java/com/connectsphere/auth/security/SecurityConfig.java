@@ -23,32 +23,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF (we use JWT, not sessions)
-            .csrf(csrf -> csrf.disable())
+                // Disable CSRF (we use JWT, not sessions)
+                .csrf(csrf -> csrf.disable())
 
-            // Stateless session — no HTTP session created
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Stateless session — no HTTP session created
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Define which endpoints are public vs protected
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints — no token required
-                .requestMatchers(
-                    "/auth/register",
-                    "/auth/login",
-                    "/auth/validate",
-                    "/auth/search"
-                ).permitAll()
+                // Define which endpoints are public vs protected
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints — no token required
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/validate",
+                                "/auth/search",
+                                // Internal service-to-service endpoints (called by comment-service for @mentions)
+                                "/auth/internal/**"
+                        ).permitAll()
 
-                // Admin-only endpoints
-                .requestMatchers("/auth/admin/**").hasRole("ADMIN")
+                        // Admin-only endpoints
+                        .requestMatchers("/auth/admin/**").hasRole("ADMIN")
 
-                // All other /auth/** endpoints require authentication
-                .anyRequest().authenticated()
-            )
+                        // All other /auth/** endpoints require authentication
+                        .anyRequest().authenticated()
+                )
 
-            // Add JWT filter before Spring's default username/password filter
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add JWT filter before Spring's default username/password filter
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -21,6 +21,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Skip JWT processing entirely for public/internal endpoints.
+     * This prevents the filter from interfering with permitAll() rules.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/auth/internal/")
+                || path.equals("/auth/register")
+                || path.equals("/auth/login")
+                || path.equals("/auth/validate")
+                || path.startsWith("/auth/search");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -34,7 +48,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String username = jwtUtil.getUsernameFromToken(token);
             String role = jwtUtil.getRoleFromToken(token);
 
-            // Set authentication in security context
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             username,
@@ -42,8 +55,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             List.of(new SimpleGrantedAuthority("ROLE_" + role))
                     );
 
-            // Store userId in request for use in controllers
             request.setAttribute("userId", userId);
+            request.setAttribute("role", role);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
@@ -51,11 +64,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Extract Bearer token from Authorization header
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // Remove "Bearer " prefix
+            return bearerToken.substring(7);
         }
         return null;
     }

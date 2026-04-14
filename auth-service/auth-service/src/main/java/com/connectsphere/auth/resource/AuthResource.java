@@ -99,7 +99,7 @@ public class AuthResource {
 
     @PutMapping("/profile")
     public ResponseEntity<User> updateProfile(@RequestBody User updatedUser,
-                                               HttpServletRequest request) {
+                                              HttpServletRequest request) {
         int userId = (int) request.getAttribute("userId");
         User updated = authService.updateProfile(userId, updatedUser);
         updated.setPasswordHash(null);
@@ -112,7 +112,7 @@ public class AuthResource {
 
     @PutMapping("/password")
     public ResponseEntity<Map<String, String>> changePassword(@RequestBody Map<String, String> body,
-                                                               HttpServletRequest request) {
+                                                              HttpServletRequest request) {
         int userId = (int) request.getAttribute("userId");
         authService.changePassword(userId, body.get("newPassword"));
         return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
@@ -138,6 +138,34 @@ public class AuthResource {
         int userId = (int) request.getAttribute("userId");
         authService.deactivateAccount(userId);
         return ResponseEntity.ok(Map.of("message", "Account deactivated successfully."));
+    }
+
+    // ─── GET /auth/internal/user-by-username/{username} ──────────────────────
+    // Internal endpoint — called by comment-service to resolve @username → userId
+    // for @mention notifications. No JWT required (service-to-service only).
+    // Returns: { "userId": 42 } or 404 if username not found.
+
+    @GetMapping("/internal/user-by-username/{username}")
+    public ResponseEntity<Map<String, Integer>> getUserIdByUsername(@PathVariable String username) {
+        return authService.getUserByUsername(username)
+                .map(user -> ResponseEntity.ok(Map.of("userId", user.getUserId())))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ─── GET /auth/internal/username-by-id/{userId} ──────────────────────────
+    // Internal endpoint — called by comment-service to get an actor's username
+    // so notification messages read "john commented on your post" (not just id=5).
+    // No JWT required (service-to-service only).
+    // Returns: { "username": "john" } or 404 if user not found.
+
+    @GetMapping("/internal/username-by-id/{userId}")
+    public ResponseEntity<Map<String, String>> getUsernameById(@PathVariable int userId) {
+        try {
+            User user = authService.getUserById(userId);
+            return ResponseEntity.ok(Map.of("username", user.getUsername()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // ─── GLOBAL EXCEPTION HANDLER ─────────────────────────────────────────────
