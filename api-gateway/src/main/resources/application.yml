@@ -5,15 +5,20 @@ spring:
   application:
     name: api-gateway
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+
   cloud:
     gateway:
-      # Global CORS — allows the React frontend (port 3000) to call the gateway
       globalcors:
         cors-configurations:
           '[/**]':
             allowedOrigins:
               - "http://localhost:3000"
-              - "http://localhost:5173"   # Vite dev server
+              - "http://localhost:5173"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
@@ -21,24 +26,24 @@ spring:
 
       routes:
 
-        # ── AUTH SERVICE (port 8081) ────────────────────────────────────────
+        # ── AUTH SERVICE ────────────────────────────────────────
         - id: auth-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
           filters:
-            - StripPrefix=1               # removes /api → /auth/...
+            - StripPrefix=1
 
-        # ── POST SERVICE (port 8082) ────────────────────────────────────────
+        # ── POST SERVICE ────────────────────────────────────────
         - id: post-service
           uri: http://localhost:8082
           predicates:
             - Path=/api/posts/**
           filters:
-            - StripPrefix=1               # /api/posts/... → /posts/...
-            - name: JwtAuthFilter         # validates JWT for protected routes
+            - StripPrefix=1
+            - name: JwtAuthFilter
 
-        # ── COMMENT SERVICE (port 8083) ─────────────────────────────────────
+        # ── COMMENT SERVICE ─────────────────────────────────────
         - id: comment-service
           uri: http://localhost:8083
           predicates:
@@ -47,7 +52,7 @@ spring:
             - StripPrefix=1
             - name: JwtAuthFilter
 
-        # ── LIKE SERVICE (port 8084) ─────────────────────────────────────────
+        # ── LIKE SERVICE ─────────────────────────────────────────
         - id: like-service
           uri: http://localhost:8084
           predicates:
@@ -56,7 +61,7 @@ spring:
             - StripPrefix=1
             - name: JwtAuthFilter
 
-        # ── FOLLOW SERVICE (port 8085) ───────────────────────────────────────
+        # ── FOLLOW SERVICE ───────────────────────────────────────
         - id: follow-service
           uri: http://localhost:8085
           predicates:
@@ -65,7 +70,7 @@ spring:
             - StripPrefix=1
             - name: JwtAuthFilter
 
-        # ── NOTIFICATION SERVICE (port 8086) ─────────────────────────────────
+        # ── NOTIFICATION SERVICE ─────────────────────────────────
         - id: notification-service
           uri: http://localhost:8086
           predicates:
@@ -74,7 +79,7 @@ spring:
             - StripPrefix=1
             - name: JwtAuthFilter
 
-        # ── MEDIA SERVICE (port 8087) ─────────────────────────────────────────
+        # ── MEDIA SERVICE ─────────────────────────────────────────
         - id: media-service-media
           uri: http://localhost:8087
           predicates:
@@ -91,26 +96,105 @@ spring:
             - StripPrefix=1
             - name: JwtAuthFilter
 
-        # ── SEARCH SERVICE (port 8088) ────────────────────────────────────────
+        # ── SEARCH SERVICE ────────────────────────────────────────
         - id: search-service-search
           uri: http://localhost:8088
           predicates:
             - Path=/api/search/**
           filters:
-            - StripPrefix=1               # /api/search/... → /search/...
+            - StripPrefix=1
 
         - id: search-service-hashtags
           uri: http://localhost:8088
           predicates:
             - Path=/api/hashtags/**
           filters:
-            - StripPrefix=1               # /api/hashtags/... → /hashtags/...
+            - StripPrefix=1
 
-# JWT secret — must match all microservices exactly
+        # ── SWAGGER ROUTES ───────────────────────────────────────
+
+        - id: auth-swagger
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/v3/api-docs,/auth/swagger-ui.html,/auth/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: post-swagger
+          uri: http://localhost:8082
+          predicates:
+            - Path=/posts/v3/api-docs,/posts/swagger-ui.html,/posts/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: comment-swagger
+          uri: http://localhost:8083
+          predicates:
+            - Path=/comments/v3/api-docs,/comments/swagger-ui.html,/comments/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: notification-swagger
+          uri: http://localhost:8086
+          predicates:
+            - Path=/notifications/v3/api-docs,/notifications/swagger-ui.html,/notifications/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: like-swagger
+          uri: http://localhost:8084
+          predicates:
+            - Path=/likes/v3/api-docs,/likes/swagger-ui.html,/likes/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: follow-swagger
+          uri: http://localhost:8085
+          predicates:
+            - Path=/follows/v3/api-docs,/follows/swagger-ui.html,/follows/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: media-swagger
+          uri: http://localhost:8087
+          predicates:
+            - Path=/media/v3/api-docs,/media/swagger-ui.html,/media/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: search-swagger
+          uri: http://localhost:8088
+          predicates:
+            - Path=/search/v3/api-docs,/search/swagger-ui.html,/search/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+# ── SWAGGER AGGREGATION ───────────────────────────────────────
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth-service
+        url: /auth/v3/api-docs
+      - name: post-service
+        url: /posts/v3/api-docs
+      - name: comment-service
+        url: /comments/v3/api-docs
+      - name: like-service
+        url: /likes/v3/api-docs
+      - name: follow-service
+        url: /follows/v3/api-docs
+      - name: notification-service
+        url: /notifications/v3/api-docs
+      - name: media-service
+        url: /media/v3/api-docs
+      - name: search-service
+        url: /search/v3/api-docs
+
+# ── JWT CONFIG ────────────────────────────────────────────────
 jwt:
   secret: connectsphere_super_secret_key_change_this_in_production_min_32_chars
 
-# Public paths — these routes skip JWT validation in the gateway filter
+# ── PUBLIC PATHS (NO JWT) ─────────────────────────────────────
 gateway:
   public-paths:
     - /api/auth/register
@@ -125,6 +209,24 @@ gateway:
     - /api/search/hashtags
     - /api/hashtags/trending
     - /api/comments/post
+
+    # Swagger paths
+    - /auth/v3/api-docs
+    - /auth/swagger-ui/**
+    - /posts/v3/api-docs
+    - /posts/swagger-ui/**
+    - /comments/v3/api-docs
+    - /comments/swagger-ui/**
+    - /likes/v3/api-docs
+    - /likes/swagger-ui/**
+    - /follows/v3/api-docs
+    - /follows/swagger-ui/**
+    - /notifications/v3/api-docs
+    - /notifications/swagger-ui/**
+    - /media/v3/api-docs
+    - /media/swagger-ui/**
+    - /search/v3/api-docs
+    - /search/swagger-ui/**
 
 logging:
   level:

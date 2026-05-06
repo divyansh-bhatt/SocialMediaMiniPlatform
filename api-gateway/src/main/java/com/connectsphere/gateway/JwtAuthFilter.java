@@ -1,9 +1,14 @@
 package com.connectsphere.gateway;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,9 +33,6 @@ import java.util.List;
  *     without re-validating the JWT themselves
  *  4. Returns 401 if token is missing or invalid
  *
- * NOTE: Spring Cloud Gateway is reactive (WebFlux).
- * This filter is a GatewayFilterFactory (not a WebFilter) because
- * it needs to be applied per-route in application.yml.
  */
 @Component
 public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Config> {
@@ -45,8 +47,11 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
             "/api/auth/refresh",
             "/api/auth/validate",
             "/api/auth/search",
+            "/api/auth/profile/",
             "/api/posts/public",
             "/api/posts/search",
+            "/api/posts/user/",        // posts by user — public for profile pages
+            "/api/posts/count/",
             "/api/search/posts",
             "/api/search/users",
             "/api/search/hashtags",
@@ -62,7 +67,9 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
-
+            if (path.contains("/swagger") || path.contains("/v3/api-docs")) {
+                return chain.filter(exchange);
+            }
             // Skip JWT check for public paths
             boolean isPublic = OPEN_PATHS.stream().anyMatch(path::startsWith);
             if (isPublic) {

@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -30,6 +31,18 @@ public class PostServiceImpl implements PostService {
     @Value("${follow.service.url:http://localhost:8085}")
     private String followServiceUrl;
 
+    @Value("${auth.service.url:http://localhost:8081}")
+    private String authServiceUrl;
+
+    private void enrichWithUsername(Post post) {
+        try {
+            String url = authServiceUrl + "/auth/internal/username-by-id/" + post.getAuthorId();
+            Map<String, String> res = restTemplate.getForObject(url, Map.class);
+            if (res != null) post.setAuthorUsername(res.get("username"));
+        } catch (Exception e) {
+            post.setAuthorUsername("user_" + post.getAuthorId());
+        }
+    }
     @Override
     public Post createPost(Post post) {
         // Set defaults

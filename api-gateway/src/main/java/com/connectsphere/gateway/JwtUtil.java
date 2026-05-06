@@ -40,12 +40,25 @@ public class JwtUtil {
     }
 
     public int getUserId(String token) {
-        Integer userId = extractAllClaims(token).get("userId", Integer.class);
-        if (userId == null) {
-            throw new RuntimeException("JWT does not contain userId claim");
-        }
+        try {
+            Claims claims = extractAllClaims(token);
 
-        return userId;
+            // Try "userId" claim (Integer)
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim instanceof Integer) return (Integer) userIdClaim;
+            if (userIdClaim instanceof Long)    return ((Long) userIdClaim).intValue();
+            if (userIdClaim instanceof Number)  return ((Number) userIdClaim).intValue();
+
+            // Try "user_id" claim (snake_case fallback)
+            Object userIdSnake = claims.get("user_id");
+            if (userIdSnake instanceof Integer) return (Integer) userIdSnake;
+            if (userIdSnake instanceof Long)    return ((Long) userIdSnake).intValue();
+            if (userIdSnake instanceof Number)  return ((Number) userIdSnake).intValue();
+
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public String getUsername(String token) {

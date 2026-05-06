@@ -29,8 +29,6 @@ public class SecurityConfig {
                 // Stateless session — no HTTP session created
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Define which endpoints are public vs protected
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints — no token required
                         .requestMatchers(
@@ -38,14 +36,10 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/validate",
                                 "/auth/search",
-                                // Internal service-to-service endpoints (called by comment-service for @mentions)
+                                "/auth/profile/*",
                                 "/auth/internal/**"
                         ).permitAll()
-
-                        // Admin-only endpoints
                         .requestMatchers("/auth/admin/**").hasRole("ADMIN")
-
-                        // All other /auth/** endpoints require authentication
                         .anyRequest().authenticated()
                 )
 

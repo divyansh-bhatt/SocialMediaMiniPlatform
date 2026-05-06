@@ -30,7 +30,9 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/posts/public",
                     "/posts/search",
-                    "/posts/{postId}"
+                    "/posts/{postId}",
+                        "/posts/user/{userId}",    // public profile posts
+                        "/posts/count/{userId}"    // public post count
                 ).permitAll()
 
                 // Counter update endpoints — called by other microservices internally

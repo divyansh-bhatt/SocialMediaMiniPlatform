@@ -29,6 +29,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))          // subject = userId
                 .claim("username", username)
+                .claim("userId", userId)
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))

@@ -26,7 +26,8 @@ public class Post {
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
-
+    @Transient  // not persisted to DB
+    private String authorUsername;
     // Stored as comma-separated URLs in DB; converted to List in Java
     @ElementCollection
     @CollectionTable(name = "post_media_urls", joinColumns = @JoinColumn(name = "post_id"))

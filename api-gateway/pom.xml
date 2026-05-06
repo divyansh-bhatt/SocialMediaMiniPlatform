@@ -35,6 +35,11 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
         <!--
             Spring Cloud Gateway — reactive gateway built on WebFlux.
             Routes all /api/** requests to the correct microservice.

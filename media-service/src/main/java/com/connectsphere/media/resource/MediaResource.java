@@ -140,9 +140,7 @@ public class MediaResource {
         return ResponseEntity.ok(Map.of("message", "Media deleted."));
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     // STORY ENDPOINTS
-    // ═══════════════════════════════════════════════════════════════════════════
 
     /**
      * POST /stories
