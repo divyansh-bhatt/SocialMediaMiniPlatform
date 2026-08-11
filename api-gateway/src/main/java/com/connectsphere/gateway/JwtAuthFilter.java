@@ -1,0 +1,105 @@
+package com.connectsphere.gateway;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+
+@Component
+public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Config> {
+
+    @Autowired
+    private JwtUtil jwtUtil;
+    private static final List<String> OPEN_PATHS = List.of(
+            "/api/auth/register",
+            "/api/auth/login",
+            "/api/auth/refresh",
+            "/api/auth/validate",
+            "/api/auth/search",
+            "/api/auth/profile/",
+            "/api/posts/public",
+            "/api/posts/search",
+            "/api/posts/user/",
+            "/api/posts/count/",
+            "/api/search/posts",
+            "/api/search/users",
+            "/api/search/hashtags",
+            "/api/hashtags"
+    );
+
+    public JwtAuthFilter() {
+        super(Config.class);
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
+            if (path.contains("/swagger") || path.contains("/v3/api-docs")) {
+                return chain.filter(exchange);
+            }
+            // Skip JWT check for public paths
+            boolean isPublic = OPEN_PATHS.stream().anyMatch(path::startsWith);
+            if (isPublic) {
+                return chain.filter(exchange);
+            }
+
+            // Check Authorization header
+            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                return unauthorised(exchange, "Missing Authorization header");
+            }
+
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return unauthorised(exchange, "Invalid Authorization format. Use: Bearer <token>");
+            }
+
+            String token = authHeader.substring(7);
+
+            if (!jwtUtil.validateToken(token)) {
+                return unauthorised(exchange, "Token is invalid or expired");
+            }
+
+            // Inject user info as headers so downstream services don't need to re-validate
+            int userId      = jwtUtil.getUserId(token);
+            String username = jwtUtil.getUsername(token);
+            String role     = jwtUtil.getRole(token);
+
+            ServerHttpRequest mutatedRequest = request.mutate()
+                    .header("X-User-Id",   String.valueOf(userId))
+                    .header("X-Username",  username)
+                    .header("X-User-Role", role)
+                    .build();
+
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+        };
+    }
+
+    private Mono<Void> unauthorised(ServerWebExchange exchange, String message) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        response.getHeaders().add("Content-Type", "application/json");
+        var body = response.bufferFactory()
+                .wrap(("{\"error\":\"" + message + "\"}").getBytes());
+        return response.writeWith(Mono.just(body));
+    }
+
+    public static class Config {
+    }
+}

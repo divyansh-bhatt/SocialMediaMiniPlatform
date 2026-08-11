@@ -1,0 +1,302 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-gateway
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      routes:
+
+        # ── AUTH SERVICE ────────────────────────────────────────
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        # ── POST SERVICE ────────────────────────────────────────
+        - id: post-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/posts/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── COMMENT SERVICE ─────────────────────────────────────
+        - id: comment-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── LIKE SERVICE ─────────────────────────────────────────
+        - id: like-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/likes/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── FOLLOW SERVICE ───────────────────────────────────────
+        - id: follow-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/follows/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── NOTIFICATION SERVICE ─────────────────────────────────
+        - id: notification-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── MEDIA SERVICE ─────────────────────────────────────────
+        - id: media-service-media
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        - id: media-service-stories
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/stories/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuthFilter
+
+        # ── SEARCH SERVICE ────────────────────────────────────────
+        - id: search-service-search
+          uri: http://localhost:8088
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - StripPrefix=1
+
+        - id: search-service-hashtags
+          uri: http://localhost:8088
+          predicates:
+            - Path=/api/hashtags/**
+          filters:
+            - StripPrefix=1
+
+        # ── SWAGGER ROUTES ───────────────────────────────────────
+
+        - id: forum-service
+          uri: http://localhost:8089
+          predicates:
+            - Path=/api/forums/**
+          filters:
+            - StripPrefix=1
+
+        - id: auth-swagger
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/v3/api-docs,/auth/swagger-ui.html,/auth/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: post-swagger
+          uri: http://localhost:8082
+          predicates:
+            - Path=/posts/v3/api-docs,/posts/swagger-ui.html,/posts/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: comment-swagger
+          uri: http://localhost:8083
+          predicates:
+            - Path=/comments/v3/api-docs,/comments/swagger-ui.html,/comments/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: notification-swagger
+          uri: http://localhost:8086
+          predicates:
+            - Path=/notifications/v3/api-docs,/notifications/swagger-ui.html,/notifications/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: like-swagger
+          uri: http://localhost:8084
+          predicates:
+            - Path=/likes/v3/api-docs,/likes/swagger-ui.html,/likes/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: follow-swagger
+          uri: http://localhost:8085
+          predicates:
+            - Path=/follows/v3/api-docs,/follows/swagger-ui.html,/follows/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: media-swagger
+          uri: http://localhost:8087
+          predicates:
+            - Path=/media/v3/api-docs,/media/swagger-ui.html,/media/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        - id: search-swagger
+          uri: http://localhost:8088
+          predicates:
+            - Path=/search/v3/api-docs,/search/swagger-ui.html,/search/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+# ── SWAGGER AGGREGATION ───────────────────────────────────────
+        - id: forum-swagger
+          uri: http://localhost:8089
+          predicates:
+            - Path=/forums/v3/api-docs,/forums/swagger-ui.html,/forums/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        # Direct service routes used by Swagger UI "Try it out".
+        # OpenAPI docs expose paths like /auth/login and /posts/{id};
+        # these routes make those paths work from the gateway origin.
+        - id: auth-swagger-tryout
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/**
+
+        - id: post-swagger-tryout
+          uri: http://localhost:8082
+          predicates:
+            - Path=/posts/**
+
+        - id: comment-swagger-tryout
+          uri: http://localhost:8083
+          predicates:
+            - Path=/comments/**
+
+        - id: like-swagger-tryout
+          uri: http://localhost:8084
+          predicates:
+            - Path=/likes/**
+
+        - id: follow-swagger-tryout
+          uri: http://localhost:8085
+          predicates:
+            - Path=/follows/**
+
+        - id: notification-swagger-tryout
+          uri: http://localhost:8086
+          predicates:
+            - Path=/notifications/**
+
+        - id: media-swagger-tryout
+          uri: http://localhost:8087
+          predicates:
+            - Path=/media/**,/stories/**
+
+        - id: search-swagger-tryout
+          uri: http://localhost:8088
+          predicates:
+            - Path=/search/**,/hashtags/**
+
+        - id: forum-swagger-tryout
+          uri: http://localhost:8089
+          predicates:
+            - Path=/forums/**
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth-service
+        url: /auth/v3/api-docs
+      - name: post-service
+        url: /posts/v3/api-docs
+      - name: comment-service
+        url: /comments/v3/api-docs
+      - name: like-service
+        url: /likes/v3/api-docs
+      - name: follow-service
+        url: /follows/v3/api-docs
+      - name: notification-service
+        url: /notifications/v3/api-docs
+      - name: media-service
+        url: /media/v3/api-docs
+      - name: search-service
+        url: /search/v3/api-docs
+      - name: forum-service
+        url: /forums/v3/api-docs
+
+# ── JWT CONFIG ────────────────────────────────────────────────
+jwt:
+  secret: connectsphere_super_secret_key_change_this_in_production_min_32_chars
+
+# ── PUBLIC PATHS (NO JWT) ─────────────────────────────────────
+gateway:
+  public-paths:
+    - /api/auth/register
+    - /api/auth/login
+    - /api/auth/oauth/google
+    - /api/auth/refresh
+    - /api/auth/validate
+    - /api/auth/search
+    - /api/posts/public
+    - /api/posts/search
+    - /api/search/posts
+    - /api/search/users
+    - /api/search/hashtags
+    - /api/hashtags/trending
+    - /api/forums
+    - /api/comments/post
+
+    # Swagger paths
+    - /auth/v3/api-docs
+    - /auth/swagger-ui/**
+    - /posts/v3/api-docs
+    - /posts/swagger-ui/**
+    - /comments/v3/api-docs
+    - /comments/swagger-ui/**
+    - /likes/v3/api-docs
+    - /likes/swagger-ui/**
+    - /follows/v3/api-docs
+    - /follows/swagger-ui/**
+    - /notifications/v3/api-docs
+    - /notifications/swagger-ui/**
+    - /media/v3/api-docs
+    - /media/swagger-ui/**
+    - /search/v3/api-docs
+    - /search/swagger-ui/**
+    - /forums/v3/api-docs
+    - /forums/swagger-ui/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.connectsphere.gateway: DEBUG
