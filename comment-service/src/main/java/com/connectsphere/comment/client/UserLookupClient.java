@@ -12,12 +12,6 @@ import java.util.Map;
 
 /**
  * UserLookupClient — calls auth-service to resolve a username to a userId.
- *
- * Endpoint used: GET /auth/internal/user-by-username/{username}
- * (We will add this internal endpoint to auth-service below.)
- *
- * Returns -1 if the username does not exist or auth-service is unreachable.
- * The caller should skip notification for any -1 result.
  */
 @Component
 public class UserLookupClient {
@@ -28,10 +22,6 @@ public class UserLookupClient {
     @Value("${auth.service.url}")
     private String authServiceUrl;
 
-    /**
-     * Resolve @username → userId.
-     * @return the integer userId, or -1 if not found / service unavailable.
-     */
     public int getUserIdByUsername(String username) {
         try {
             String url = authServiceUrl + "/auth/internal/user-by-username/" + username;
@@ -50,10 +40,6 @@ public class UserLookupClient {
         return -1;
     }
 
-    /**
-     * Resolve userId → username (used to build notification messages).
-     * @return the username string, or "Someone" if not found.
-     */
     public String getUsernameById(int userId) {
         try {
             String url = authServiceUrl + "/auth/internal/username-by-id/" + userId;

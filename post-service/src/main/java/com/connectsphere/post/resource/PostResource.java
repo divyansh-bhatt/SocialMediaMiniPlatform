@@ -145,6 +145,30 @@ public class PostResource {
         return ResponseEntity.ok(postService.getPostCount(userId));
     }
 
+    /**
+     * GET /posts/admin/all
+     * Get ALL posts including deleted ones — admin view.
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<Post>> getAllPostsAdmin(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        return ResponseEntity.ok(postService.getAllPostsAdmin());
+    }
+
+    /**
+     * DELETE /posts/admin/{postId}
+     * Admin hard-deletes any post regardless of author.
+     */
+    @DeleteMapping("/admin/{postId}")
+    public ResponseEntity<Map<String, String>> adminDeletePost(@PathVariable int postId,
+                                                               HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        postService.deletePost(postId);
+        return ResponseEntity.ok(Map.of("message", "Post deleted by admin."));
+    }
+
     // ─── INTERNAL ENDPOINTS (called by other microservices) ──────────────────
     // These are NOT for end users — only called by like-service, comment-service
 

@@ -19,6 +19,7 @@ public class SecurityConfig {
         http.csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Public: view reaction counts and summaries
                 .requestMatchers("/likes/count", "/likes/summary", "/likes/target",
                                  "/likes/has-liked").permitAll()

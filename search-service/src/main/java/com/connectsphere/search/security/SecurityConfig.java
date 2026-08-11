@@ -21,6 +21,7 @@ public class SecurityConfig {
         http.csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // All search, hashtag, and internal endpoints are public
                 // Search is accessible by guests — no authentication required
                 .requestMatchers("/search/**", "/hashtags/**").permitAll()

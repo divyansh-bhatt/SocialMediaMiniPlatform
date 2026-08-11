@@ -28,6 +28,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public: browse posts and search without login
                 .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
+                .requestMatchers(
                     "/posts/public",
                     "/posts/search",
                     "/posts/{postId}",

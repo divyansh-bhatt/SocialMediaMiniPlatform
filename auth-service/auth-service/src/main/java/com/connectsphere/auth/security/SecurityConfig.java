@@ -32,8 +32,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints — no token required
                         .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/auth/register",
                                 "/auth/login",
+                                "/auth/oauth/google",
                                 "/auth/validate",
                                 "/auth/search",
                                 "/auth/profile/*",
@@ -49,7 +53,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // BCrypt password encoder — used by AuthServiceImpl to hash passwords
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

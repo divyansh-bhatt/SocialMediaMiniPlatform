@@ -19,28 +19,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-/**
- * JwtAuthFilter — Spring Cloud Gateway filter factory.
- *
- * Applied to routes that need authentication (see application.yml).
- * For public routes the filter is not applied at all.
- *
- * What it does:
- *  1. Checks for Authorization: Bearer <token> header
- *  2. Validates the JWT signature and expiry
- *  3. Injects X-User-Id, X-Username, X-User-Role headers into the
- *     forwarded request so downstream microservices can trust them
- *     without re-validating the JWT themselves
- *  4. Returns 401 if token is missing or invalid
- *
- */
+
 @Component
 public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Config> {
 
     @Autowired
     private JwtUtil jwtUtil;
-
-    // Paths that never require a JWT even if the filter is applied
     private static final List<String> OPEN_PATHS = List.of(
             "/api/auth/register",
             "/api/auth/login",
@@ -50,7 +34,7 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
             "/api/auth/profile/",
             "/api/posts/public",
             "/api/posts/search",
-            "/api/posts/user/",        // posts by user — public for profile pages
+            "/api/posts/user/",
             "/api/posts/count/",
             "/api/search/posts",
             "/api/search/users",
@@ -117,6 +101,5 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
     }
 
     public static class Config {
-        // No config fields needed for now
     }
 }

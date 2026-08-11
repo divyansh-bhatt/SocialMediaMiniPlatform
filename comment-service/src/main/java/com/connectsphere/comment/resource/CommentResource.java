@@ -20,9 +20,6 @@ public class CommentResource {
     private CommentService commentService;
 
     // Add a top-level comment OR a reply.
-    // For a top-level comment: { "postId": 1, "content": "Great post!" }
-    // For a reply:             { "postId": 1, "parentCommentId": 5, "content": "I agree!" }
-    // authorId is always taken from JWT — never from the request body
 
     @PostMapping
     public ResponseEntity<Comment> addComment(@RequestBody Comment comment,

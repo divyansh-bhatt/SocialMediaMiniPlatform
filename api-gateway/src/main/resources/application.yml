@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8090
 
 spring:
   application:
@@ -113,6 +113,13 @@ spring:
 
         # ── SWAGGER ROUTES ───────────────────────────────────────
 
+        - id: forum-service
+          uri: http://localhost:8089
+          predicates:
+            - Path=/api/forums/**
+          filters:
+            - StripPrefix=1
+
         - id: auth-swagger
           uri: http://localhost:8081
           predicates:
@@ -170,6 +177,61 @@ spring:
             - StripPrefix=1
 
 # ── SWAGGER AGGREGATION ───────────────────────────────────────
+        - id: forum-swagger
+          uri: http://localhost:8089
+          predicates:
+            - Path=/forums/v3/api-docs,/forums/swagger-ui.html,/forums/swagger-ui/**
+          filters:
+            - StripPrefix=1
+
+        # Direct service routes used by Swagger UI "Try it out".
+        # OpenAPI docs expose paths like /auth/login and /posts/{id};
+        # these routes make those paths work from the gateway origin.
+        - id: auth-swagger-tryout
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/**
+
+        - id: post-swagger-tryout
+          uri: http://localhost:8082
+          predicates:
+            - Path=/posts/**
+
+        - id: comment-swagger-tryout
+          uri: http://localhost:8083
+          predicates:
+            - Path=/comments/**
+
+        - id: like-swagger-tryout
+          uri: http://localhost:8084
+          predicates:
+            - Path=/likes/**
+
+        - id: follow-swagger-tryout
+          uri: http://localhost:8085
+          predicates:
+            - Path=/follows/**
+
+        - id: notification-swagger-tryout
+          uri: http://localhost:8086
+          predicates:
+            - Path=/notifications/**
+
+        - id: media-swagger-tryout
+          uri: http://localhost:8087
+          predicates:
+            - Path=/media/**,/stories/**
+
+        - id: search-swagger-tryout
+          uri: http://localhost:8088
+          predicates:
+            - Path=/search/**,/hashtags/**
+
+        - id: forum-swagger-tryout
+          uri: http://localhost:8089
+          predicates:
+            - Path=/forums/**
+
 springdoc:
   swagger-ui:
     urls:
@@ -189,6 +251,8 @@ springdoc:
         url: /media/v3/api-docs
       - name: search-service
         url: /search/v3/api-docs
+      - name: forum-service
+        url: /forums/v3/api-docs
 
 # ── JWT CONFIG ────────────────────────────────────────────────
 jwt:
@@ -199,6 +263,7 @@ gateway:
   public-paths:
     - /api/auth/register
     - /api/auth/login
+    - /api/auth/oauth/google
     - /api/auth/refresh
     - /api/auth/validate
     - /api/auth/search
@@ -208,6 +273,7 @@ gateway:
     - /api/search/users
     - /api/search/hashtags
     - /api/hashtags/trending
+    - /api/forums
     - /api/comments/post
 
     # Swagger paths
@@ -227,6 +293,8 @@ gateway:
     - /media/swagger-ui/**
     - /search/v3/api-docs
     - /search/swagger-ui/**
+    - /forums/v3/api-docs
+    - /forums/swagger-ui/**
 
 logging:
   level:

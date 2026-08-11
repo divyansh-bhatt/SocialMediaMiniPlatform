@@ -19,9 +19,6 @@ public class AuthResource {
     @Autowired
     private AuthService authService;
 
-    // ─── POST /auth/register ──────────────────────────────────────────────────
-    // Body: { "username": "john", "email": "john@email.com", "passwordHash": "secret123" }
-
     @PostMapping("/register")
     public ResponseEntity<User> register(@Valid @RequestBody User user) {
         User registered = authService.register(user);
@@ -29,10 +26,6 @@ public class AuthResource {
         registered.setPasswordHash(null);
         return ResponseEntity.status(HttpStatus.CREATED).body(registered);
     }
-
-    // ─── POST /auth/login ─────────────────────────────────────────────────────
-    // Body: { "email": "john@email.com", "password": "secret123" }
-    // Returns: { "token": "eyJhbGci..." }
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
@@ -42,8 +35,12 @@ public class AuthResource {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    // ─── POST /auth/logout ────────────────────────────────────────────────────
-    // Header: Authorization: Bearer <token>
+    @PostMapping("/oauth/google")
+    public ResponseEntity<Map<String, String>> googleLogin(@RequestBody Map<String, String> body) {
+        String credential = body.get("credential");
+        String token = authService.loginWithGoogle(credential);
+        return ResponseEntity.ok(Map.of("token", token));
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader) {
@@ -52,28 +49,17 @@ public class AuthResource {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully."));
     }
 
-    // ─── POST /auth/refresh ───────────────────────────────────────────────────
-    // Body: { "token": "eyJhbGci..." }
-    // Returns: { "token": "eyJhbGci..." }  (new token)
-
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
         String newToken = authService.refreshToken(body.get("token"));
         return ResponseEntity.ok(Map.of("token", newToken));
     }
 
-    // ─── GET /auth/validate ───────────────────────────────────────────────────
-    // Query param: ?token=eyJhbGci...
-    // Used by other microservices to validate tokens
-
     @GetMapping("/validate")
     public ResponseEntity<Map<String, Boolean>> validate(@RequestParam String token) {
         boolean valid = authService.validateToken(token);
         return ResponseEntity.ok(Map.of("valid", valid));
     }
-
-    // ─── GET /auth/profile ────────────────────────────────────────────────────
-    // Header: Authorization: Bearer <token>
 
     @GetMapping("/profile")
     public ResponseEntity<User> getProfile(HttpServletRequest request) {
@@ -83,9 +69,6 @@ public class AuthResource {
         return ResponseEntity.ok(user);
     }
 
-    // ─── GET /auth/profile/{userId} ───────────────────────────────────────────
-    // Public: get any user's profile by ID (for other services to call)
-
     @GetMapping("/profile/{userId}")
     public ResponseEntity<User> getProfileById(@PathVariable int userId) {
         User user = authService.getUserById(userId);
@@ -93,9 +76,6 @@ public class AuthResource {
         return ResponseEntity.ok(user);
     }
 
-    // ─── PUT /auth/profile ────────────────────────────────────────────────────
-    // Header: Authorization: Bearer <token>
-    // Body: { "fullName": "John Doe", "bio": "Developer", "profilePicUrl": "..." }
 
     @PutMapping("/profile")
     public ResponseEntity<User> updateProfile(@RequestBody User updatedUser,
@@ -106,10 +86,6 @@ public class AuthResource {
         return ResponseEntity.ok(updated);
     }
 
-    // ─── PUT /auth/password ───────────────────────────────────────────────────
-    // Header: Authorization: Bearer <token>
-    // Body: { "newPassword": "newSecret123" }
-
     @PutMapping("/password")
     public ResponseEntity<Map<String, String>> changePassword(@RequestBody Map<String, String> body,
                                                               HttpServletRequest request) {
@@ -117,10 +93,6 @@ public class AuthResource {
         authService.changePassword(userId, body.get("newPassword"));
         return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
     }
-
-    // ─── GET /auth/search ─────────────────────────────────────────────────────
-    // Query param: ?query=john
-    // Public: search users by username or full name
 
     @GetMapping("/search")
     public ResponseEntity<List<User>> searchUsers(@RequestParam String query) {
@@ -130,9 +102,6 @@ public class AuthResource {
         return ResponseEntity.ok(users);
     }
 
-    // ─── DELETE /auth/deactivate ──────────────────────────────────────────────
-    // Header: Authorization: Bearer <token>
-
     @DeleteMapping("/deactivate")
     public ResponseEntity<Map<String, String>> deactivate(HttpServletRequest request) {
         int userId = (int) request.getAttribute("userId");
@@ -140,10 +109,62 @@ public class AuthResource {
         return ResponseEntity.ok(Map.of("message", "Account deactivated successfully."));
     }
 
-    // ─── GET /auth/internal/user-by-username/{username} ──────────────────────
-    // Internal endpoint — called by comment-service to resolve @username → userId
-    // for @mention notifications. No JWT required (service-to-service only).
-    // Returns: { "userId": 42 } or 404 if username not found.
+    @GetMapping("/admin/users")
+    public ResponseEntity<List<User>> getAllUsers(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        List<User> users = authService.getAllUsers();
+        users.forEach(u -> u.setPasswordHash(null));
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/admin/users/deactivated")
+    public ResponseEntity<List<User>> getDeactivatedUsers(HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        List<User> users = authService.getDeactivatedUsers();
+        users.forEach(u -> u.setPasswordHash(null));
+        return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/admin/users/{userId}/reactivate")
+    public ResponseEntity<User> reactivateAccount(@PathVariable int userId,
+                                                  HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        User user = authService.reactivateAccount(userId);
+        user.setPasswordHash(null);
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/admin/users/{userId}/deactivate")
+    public ResponseEntity<Map<String, String>> adminDeactivate(@PathVariable int userId,
+                                                               HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        authService.deactivateAccount(userId);
+        return ResponseEntity.ok(Map.of("message", "Account deactivated."));
+    }
+
+    @DeleteMapping("/admin/users/{userId}")
+    public ResponseEntity<Map<String, String>> hardDeleteUser(@PathVariable int userId,
+                                                              HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        authService.hardDeleteUser(userId);
+        return ResponseEntity.ok(Map.of("message", "User permanently deleted."));
+    }
+
+    @PutMapping("/admin/users/{userId}/role")
+    public ResponseEntity<User> changeRole(@PathVariable int userId,
+                                           @RequestBody Map<String, String> body,
+                                           HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"ADMIN".equals(role)) return ResponseEntity.status(403).build();
+        User updated = authService.changeUserRole(userId, body.get("role"));
+        updated.setPasswordHash(null);
+        return ResponseEntity.ok(updated);
+    }
 
     @GetMapping("/internal/user-by-username/{username}")
     public ResponseEntity<Map<String, Integer>> getUserIdByUsername(@PathVariable String username) {
@@ -151,12 +172,6 @@ public class AuthResource {
                 .map(user -> ResponseEntity.ok(Map.of("userId", user.getUserId())))
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    // ─── GET /auth/internal/username-by-id/{userId} ──────────────────────────
-    // Internal endpoint — called by comment-service to get an actor's username
-    // so notification messages read "john commented on your post" (not just id=5).
-    // No JWT required (service-to-service only).
-    // Returns: { "username": "john" } or 404 if user not found.
 
     @GetMapping("/internal/username-by-id/{userId}")
     public ResponseEntity<Map<String, String>> getUsernameById(@PathVariable int userId) {
@@ -167,8 +182,6 @@ public class AuthResource {
             return ResponseEntity.notFound().build();
         }
     }
-
-    // ─── GLOBAL EXCEPTION HANDLER ─────────────────────────────────────────────
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleException(RuntimeException ex) {

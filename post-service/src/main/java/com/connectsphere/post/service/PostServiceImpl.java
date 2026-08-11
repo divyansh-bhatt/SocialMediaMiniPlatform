@@ -207,4 +207,8 @@ public class PostServiceImpl implements PostService {
     public int getPostCount(int authorId) {
         return postRepository.countByAuthorIdAndIsDeletedFalse(authorId);
     }
+    @Override
+    public List<Post> getAllPostsAdmin() {
+        return postRepository.findAll();
+    }
 }

@@ -10,8 +10,6 @@ import java.util.Map;
 
 /**
  * UserLookupClient for follow-service.
- * Resolves userId → username via auth-service so FOLLOW notifications
- * read "john started following you" instead of "User #5 started following you".
  */
 @Component
 public class UserLookupClient {

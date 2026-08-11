@@ -22,6 +22,7 @@ public class SecurityConfig {
         http.csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Public: viewing media attached to posts
                 .requestMatchers(HttpMethod.GET, "/media/post/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/media/**").permitAll()

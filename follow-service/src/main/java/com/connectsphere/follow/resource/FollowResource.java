@@ -81,10 +81,6 @@ public class FollowResource {
         ));
     }
 
-    // KEY INTERNAL ENDPOINT — called by post-service to build news feed
-    // Returns plain List<Integer> of followee IDs
-    // No JWT needed — internal service-to-service call from post-service
-    // post-service calls: GET :8085/follows/{userId}/following-ids
     @GetMapping("/{userId}/following-ids")
     public ResponseEntity<List<Integer>> getFollowingIds(@PathVariable int userId) {
         return ResponseEntity.ok(followService.getFollowingIds(userId));
@@ -99,9 +95,6 @@ public class FollowResource {
         return ResponseEntity.ok(followService.getMutualFollows(userId1, userId2));
     }
 
-    // Get suggested users to follow — JWT required
-    // Based on second-degree connections (friends of friends)
-    // Returns List<Integer> of suggested userIds
     @GetMapping("/suggested")
     public ResponseEntity<List<Integer>> getSuggestedUsers(HttpServletRequest request) {
         int userId = (int) request.getAttribute("userId");

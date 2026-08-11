@@ -20,4 +20,7 @@ public interface PostService {
     void decrementComments(int postId);
     void changeVisibility(int postId, String visibility);
     int getPostCount(int authorId);
+
+    // Admin: get all posts including deleted
+    List<Post> getAllPostsAdmin();
 }

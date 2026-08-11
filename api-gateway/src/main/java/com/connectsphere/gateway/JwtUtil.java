@@ -43,13 +43,11 @@ public class JwtUtil {
         try {
             Claims claims = extractAllClaims(token);
 
-            // Try "userId" claim (Integer)
             Object userIdClaim = claims.get("userId");
             if (userIdClaim instanceof Integer) return (Integer) userIdClaim;
             if (userIdClaim instanceof Long)    return ((Long) userIdClaim).intValue();
             if (userIdClaim instanceof Number)  return ((Number) userIdClaim).intValue();
 
-            // Try "user_id" claim (snake_case fallback)
             Object userIdSnake = claims.get("user_id");
             if (userIdSnake instanceof Integer) return (Integer) userIdSnake;
             if (userIdSnake instanceof Long)    return ((Long) userIdSnake).intValue();

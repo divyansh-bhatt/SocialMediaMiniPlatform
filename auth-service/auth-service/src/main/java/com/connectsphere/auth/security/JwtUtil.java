@@ -15,19 +15,16 @@ public class JwtUtil {
     private String jwtSecret;
 
     @Value("${jwt.expiration}")
-    private long jwtExpirationMs; // 86400000 = 24 hours
+    private long jwtExpirationMs;
 
-    // Build the signing key from the secret string
+
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    // ─── GENERATE TOKEN ───────────────────────────────────────────────────────
-    // Encodes userId, username, and role into the JWT payload (claims)
-
     public String generateToken(int userId, String username, String role) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))          // subject = userId
+                .setSubject(String.valueOf(userId))
                 .claim("username", username)
                 .claim("userId", userId)
                 .claim("role", role)
@@ -36,8 +33,6 @@ public class JwtUtil {
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
-    // ─── VALIDATE TOKEN ───────────────────────────────────────────────────────
 
     public boolean validateToken(String token) {
         try {
@@ -56,8 +51,6 @@ public class JwtUtil {
             throw new RuntimeException("JWT token is empty or null.");
         }
     }
-
-    // ─── EXTRACT CLAIMS ───────────────────────────────────────────────────────
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()

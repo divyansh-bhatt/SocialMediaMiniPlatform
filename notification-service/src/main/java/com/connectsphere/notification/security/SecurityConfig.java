@@ -21,6 +21,7 @@ public class SecurityConfig {
         http.csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Internal endpoints — called service-to-service, no JWT on the wire
                 .requestMatchers("/notifications/internal/**").permitAll()
                 // Everything else needs a valid JWT

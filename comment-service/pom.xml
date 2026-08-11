@@ -14,7 +14,7 @@
     <groupId>com.connectsphere</groupId>
     <artifactId>comment-service</artifactId>
     <version>1.0.0</version>
-    <n>comment-service</n>
+    <name>comment-service</name>
     <description>ConnectSphere Comment Service</description>
 
     <properties>

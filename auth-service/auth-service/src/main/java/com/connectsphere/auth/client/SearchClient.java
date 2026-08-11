@@ -13,9 +13,6 @@ import java.util.Map;
  *
  * All calls fire-and-forget in try/catch.
  *
- * Endpoints called:
- *   POST   /search/internal/index/user          — on register/updateProfile
- *   DELETE /search/internal/index/user/{userId} — on deactivateAccount
  */
 @Component
 public class SearchClient {
